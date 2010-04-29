@@ -41,35 +41,22 @@ sub do_autoconf {
 sub do_config {
     print <<"EOF";
 
-graph_title kumofs command statistics
+graph_title kumofs item counts
 graph_args --base 1000 --lower-limit 0
-graph_vlabel commands per seconds
+graph_vlabel total items
 graph_category kumofs
-get.label get
-get.type COUNTER
-get.info Number of GET command requests
-get.draw LINE1
-set.label set
-set.type COUNTER
-set.info Number of SET command requests
-set.draw LINE1
-delete.label delete
-delete.type COUNTER
-delete.info Number of DELETE command requests
-delete.draw LINE1
+items.label items
+items.type GAUGE
+items.info Number of items in kumo-server
 
 EOF
     exit 0;
 }
 
 sub do_print {
-    my @val = map { chomp; $_ } (`$kumostat localhost cmd_get`,
-				 `$kumostat localhost cmd_set`,
-				 `$kumostat localhost cmd_delete`);
+    my @val = map { chomp; $_ } (`$kumostat localhost items`);
     printf <<EOF, @val;
-get.value %d
-set.value %d
-delete.value %d
+items.value %d
 EOF
     return;
 }
