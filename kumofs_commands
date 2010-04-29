@@ -1,0 +1,79 @@
+#!/usr/bin/perl
+#
+# Copyright (c) 2010  S2 Factory, Inc.  All rights reserved.
+#
+# $Id$
+#
+#%# family=auto
+#%# capabilities=autoconf
+
+use strict;
+use warnings;
+use Munin::Plugin;
+use Data::Dumper;
+use MIME::Base64;
+use Storable qw(freeze thaw);
+
+my $poll_interval = 300;	# 300 seconds
+my $plugin_name   = 'kumofs';
+my $kumostat      = '/usr/local/bin/kumostat';
+my $cmd           = $ARGV[0] || '';
+
+do_autoconf($kumostat) if ($cmd eq 'autoconf');
+
+do_config() if ($cmd eq 'config');
+
+do_print();
+
+exit 0;
+
+# ============================================================
+sub do_autoconf {
+    my ($kumostat) = @_;
+    if (not -x $kumostat) {
+	print "no (require kumostat(1))\n";
+	exit 1;
+    }
+    print "yes\n";
+    exit 0;
+}
+
+sub do_config {
+    print <<"EOF";
+
+graph_title kumofs command statistics
+graph_args --base 1000 --lower-limit 0
+graph_vlabel commands per seconds
+graph_category kumofs
+get.label get
+get.type GAUGE
+get.info Number of GET command requests
+get.draw LINE1
+set.label set
+set.type GAUGE
+set.info Number of SET command requests
+set.draw LINE1
+delete.label delete
+delete.type GAUGE
+delete.info Number of DELETE command requests
+delete.draw LINE1
+
+EOF
+    exit 0;
+}
+
+sub do_print {
+    my @val = map { chomp } (`$kumostat localhost cmd_get`,
+			     `$kumostat localhost cmd_set`,
+			     `$kumostat localhost cmd_delete`);
+    printf <<EOF, @val;
+get.value %d
+set.value %d
+delete.value %d
+EOF
+    return;
+}
+
+# Local Variables:
+# cperl-indent-level: 4
+# End:
